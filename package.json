@@ -1,0 +1,19 @@
+{
+  "name": "@screeps/driver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "author": "Artem Chivchalov <contact@screeps.com>",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^3.10.1",
+    "node-gyp": "^3.4.0",
+    "q": "^1.4.1"
+  },
+  "devDependencies": {
+    "nan": "^2.4.0"
+  },
+  "scripts": {
+    "install": "node-gyp rebuild -C native"
+  }
+}
