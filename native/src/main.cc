@@ -1,3 +1,4 @@
+// Author: Marcel Laverdet <https://github.com/laverdet>
 #include <nan.h>
 #include "pf.h"
 
