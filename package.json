@@ -8,9 +8,7 @@
   "dependencies": {
     "lodash": "^3.10.1",
     "node-gyp": "^3.4.0",
-    "q": "^1.4.1"
-  },
-  "devDependencies": {
+    "q": "^1.4.1",
     "nan": "^2.4.0"
   },
   "scripts": {
