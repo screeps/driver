@@ -542,7 +542,7 @@ using namespace screeps;
 				// Calculate costs
 				world_position_t pos = pos_from_index(index);
 				cost_t h_cost = heuristic(pos);
-				cost_t g_cost = f_cost - h_cost * state.heuristic_weight;
+				cost_t g_cost = f_cost - cost_t(h_cost * state.heuristic_weight);
 				// std::cout <<"\n* " <<pos <<": h(" << h_cost <<") + " <<"g(" <<g_cost <<") = f(" <<f_cost <<")\n";
 
 				// Reached destination?
