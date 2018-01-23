@@ -3,21 +3,8 @@
 		'default_configuration': 'Release',
 		'configurations': {
 			'Release': {
-				'cflags': [ '-O3' ],
 				'xcode_settings': {
 					'GCC_OPTIMIZATION_LEVEL': '3',
-					'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
-				},
-				'msvs_settings': {
-					'VCCLCompilerTool': {
-						'Optimization': 3,
-						'FavorSizeOrSpeed': 1,
-					},
-				},
-			},
-			'Debug': {
-				'xcode_settings': {
-					'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
 				},
 			},
 		},
@@ -28,10 +15,21 @@
 			'include_dirs': [
 				'<!(node -e "require(\'nan\')")',
 			],
-			'cflags!': [ '-fno-exceptions' ],
 			'cflags_cc!': [ '-fno-exceptions' ],
+			'xcode_settings': {
+				'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+			},
+			'msvs_settings': {
+				'VCCLCompilerTool': {
+					'ExceptionHandling': '1',
+				},
+			},
 			'conditions': [
-				[ 'OS == "win"', { 'defines': ['NOMINMAX'] } ],
+				[ 'OS == "win"', { 'defines': [ 'NOMINMAX' ] } ],
+				[ 'OS == "win"',
+					{ 'defines': [ 'IVM_DLLEXPORT=__declspec(dllexport)' ] },
+					{ 'defines': [ 'IVM_DLLEXPORT=' ] },
+				],
 			],
 			'sources': [
 				'src/main.cc',
