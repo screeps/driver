@@ -1,17 +1,23 @@
 {
   "name": "@screeps/driver",
-  "version": "3.2.1",
+  "version": "4.0.0-beta.2",
   "description": "",
   "main": "lib/index.js",
   "author": "Artem Chivchalov <contact@screeps.com>",
   "license": "ISC",
   "dependencies": {
+    "generic-pool": "^3.4.1",
+    "isolated-vm": "^1.0.0",
     "lodash": "^3.10.1",
     "nan": "^2.4.0",
     "node-gyp": "^3.6.2",
-    "q": "^1.4.1"
+    "q": "^1.4.1",
+    "webpack": "^3.11.0",
+    "webpack-shell-plugin": "^0.5.0"
   },
   "scripts": {
-    "install": "node-gyp rebuild -C native"
+    "build": "webpack",
+    "watch": "webpack --watch",
+    "install": "node-gyp rebuild -C native && webpack"
   }
 }

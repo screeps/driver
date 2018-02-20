@@ -5,7 +5,7 @@
 namespace screeps {
 
 	// Pathfinder
-	path_finder_t pf;
+	thread_local path_finder_t pf;
 	uint8_t room_info_t::cost_matrix0[2500] = { 0 };
 	NAN_METHOD(search) {
 		path_finder_t::cost_t plain_cost = Nan::To<uint32_t>(info[3]).FromJust();
@@ -30,8 +30,13 @@ namespace screeps {
 	}
 };
 
-NAN_MODULE_INIT(init) {
+extern "C" void InitForContext(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> target) {
 	Nan::Set(target, Nan::New("search").ToLocalChecked(), Nan::GetFunction(Nan::New<v8::FunctionTemplate>(screeps::search)).ToLocalChecked());
 	Nan::Set(target, Nan::New("loadTerrain").ToLocalChecked(), Nan::GetFunction(Nan::New<v8::FunctionTemplate>(screeps::load_terrain)).ToLocalChecked());
+}
+
+NAN_MODULE_INIT(init) {
+	v8::Isolate* isolate = v8::Isolate::GetCurrent();
+	InitForContext(isolate, isolate->GetCurrentContext(), target);
 }
 NODE_MODULE(native, init);
