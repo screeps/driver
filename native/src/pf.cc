@@ -564,6 +564,11 @@ using namespace screeps;
 				// Add next neighbors to heap
 				jps(index, pos, g_cost);
 				--ops_remaining;
+
+				// Check termination
+				if (v8::Isolate::GetCurrent()->IsExecutionTerminating()) {
+					return Nan::Undefined();
+				}
 			}
 		} catch (js_error) {
 			// Whoever threw the `js_error` should set the exception for v8
