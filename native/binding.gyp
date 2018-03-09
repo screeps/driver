@@ -3,21 +3,8 @@
 		'default_configuration': 'Release',
 		'configurations': {
 			'Release': {
-				'cflags': [ '-O3' ],
 				'xcode_settings': {
 					'GCC_OPTIMIZATION_LEVEL': '3',
-					'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
-				},
-				'msvs_settings': {
-					'VCCLCompilerTool': {
-						'Optimization': 3,
-						'FavorSizeOrSpeed': 1,
-					},
-				},
-			},
-			'Debug': {
-				'xcode_settings': {
-					'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
 				},
 			},
 		},
@@ -25,6 +12,18 @@
 	'targets': [
 		{
 			'target_name': 'native',
+			'cflags_cc': [ '-std=c++14', '-g' ],
+			'cflags_cc!': [ '-fno-exceptions' ],
+			'xcode_settings': {
+				'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+				'GCC_GENERATE_DEBUGGING_SYMBOLS': 'YES',
+				'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
+			},
+			'msvs_settings': {
+				'VCCLCompilerTool': {
+					'ExceptionHandling': '1',
+				},
+			},
 			'include_dirs': [
 				'<!(node -e "require(\'nan\')")',
 			],
