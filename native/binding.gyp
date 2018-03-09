@@ -7,6 +7,25 @@
 					'GCC_OPTIMIZATION_LEVEL': '3',
 				},
 			},
+			'Profile': {
+				'cflags_cc': [ '-O3', '-fprofile-generate' ],
+				'ldflags': [ '-fprofile-generate' ],
+				'xcode_settings': {
+					'GCC_OPTIMIZATION_LEVEL': '3',
+					'OTHER_CPLUSPLUSFLAGS': [ '-fprofile-instr-generate=_clangprof.profraw' ],
+					'OTHER_LDFLAGS': [ '-fprofile-instr-generate=_clangprof.profraw' ],
+				},
+			},
+			'Optimized': {
+				'cflags_cc': [
+					'-O3',
+					'-fprofile-use=build/Profile/obj.target/native/src/pf.gcda',
+					'-fprofile-use=build/Profile/obj.target/native/src/main.gcda',
+				],
+				'xcode_settings': {
+					'OTHER_CPLUSPLUSFLAGS': [ '-fprofile-use=../_clangprof.profdata' ],
+				},
+			},
 		},
 	},
 	'targets': [
