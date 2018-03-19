@@ -1,0 +1,14 @@
+#!/bin/bash
+# Runs GCC or Clang (OS X) profiling instrumentation and compiles w/ profile-guided optimizations
+set -e
+node-gyp configure
+make V=1 BUILDTYPE=Profile -C build
+echo -e "\nRunning instrumentation now..."
+node profile.js Profile >/dev/null
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	/usr/local/Cellar/llvm/$(brew list --versions llvm | awk '{print $2}')/bin/llvm-profdata merge -output _clangprof.profdata _clangprof.profraw
+fi
+make V=1 BUILDTYPE=Optimized -C build
+echo "Re-running..."
+node profile.js Optimized >/dev/null
+echo "Looks good. Replacing release with optimized."
