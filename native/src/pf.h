@@ -1,15 +1,15 @@
 // Author: Marcel Laverdet <https://github.com/laverdet>
 #include <nan.h>
+#include <array>
 #include <iostream>
 #include <memory>
-#include <vector>
-#include <map>
-#include <set>
 #include <stdexcept>
+#include <unordered_set>
+#include <vector>
 
 namespace screeps {
 
-	const unsigned int k_max_rooms = 16;
+	constexpr size_t k_max_rooms = 16;
 
 	//
 	// Stores coordinates of a room on the global world map.
@@ -33,10 +33,21 @@ namespace screeps {
 			yy = Nan::To<uint32_t>(Nan::Get(obj, Nan::New("yy").ToLocalChecked()).ToLocalChecked()).FromJust();
 		}
 
+		bool operator== (map_position_t right) const {
+			return this->id == right.id;
+		}
+
 		bool operator< (map_position_t right) const {
 			return this->id < right.id;
 		}
+
+		struct hash_t {
+			size_t operator()(const map_position_t& val) const {
+				return std::hash<uint16_t>()(val.id);
+			}
+		};
 	};
+
 
 	//
 	// Similar to a RoomPosition object, but stores coordinates in a continuous global plane.
@@ -149,14 +160,15 @@ namespace screeps {
 
 	//
 	// Simple open-closed list
+	template <size_t capacity>
 	class open_closed_t {
 
 		private:
-			std::vector<unsigned int> list;
+			std::array<unsigned int, capacity> list;
 			unsigned int marker;
 
 		public:
-			open_closed_t(size_t size) : list(size), marker(1) {}
+			open_closed_t() : list{}, marker(1) {}
 
 			void clear() {
 				if (std::numeric_limits<unsigned int>::max() - 2 <= marker) {
@@ -192,6 +204,8 @@ namespace screeps {
 		map_position_t pos;
 		static uint8_t cost_matrix0[2500];
 
+		room_info_t() = default;
+
 		room_info_t(uint8_t* terrain, uint8_t* cost_matrix, map_position_t pos) :
 			terrain(terrain),
 			cost_matrix((uint8_t(*)[50])(cost_matrix == NULL ? cost_matrix0 : cost_matrix)),
@@ -222,34 +236,28 @@ namespace screeps {
 
 	//
 	// Priority queue implementation w/ support for updating priorities
-	template <class index_t, class priority_t>
+	template <class index_t, class priority_t, size_t capacity>
 	class heap_t {
 
 		private:
-			std::vector<priority_t> priorities;
-			std::vector<index_t> heap;
+			std::array<priority_t, capacity> priorities;
+			// This means there can only be 2500 pending nodes. It's not related to room size of 50 * 50.
+			std::array<index_t, 2500> heap;
 			size_t size_;
 
 		public:
-			heap_t(size_t max_size, size_t max_index) : priorities(max_index), heap(max_size), size_(0) {}
+			heap_t() : size_(0) {}
 
-			priority_t min_priority() const {
-				return priorities[heap[1]];
+			bool empty() const {
+				return size_ == 0;
 			}
 
-			index_t min() const {
-				return heap[1];
-			}
-
-			size_t size() const {
-				return size_;
-			}
-
-			priority_t priority(index_t index) {
+			priority_t priority(index_t index) const {
 				return priorities[index];
 			}
 
-			void pop() {
+			std::pair<index_t, priority_t> pop() {
+				std::pair<index_t, priority_t> ret(heap[1], priorities[heap[1]]);
 				heap[1] = heap[size_];
 				--size_;
 				size_t vv = 1;
@@ -270,12 +278,13 @@ namespace screeps {
 					if (uu != vv) {
 						std::swap(heap[uu], heap[vv]);
 					} else {
-						return;
+						break;
 					}
 				} while(true);
+				return ret;
 			}
 
-			void push(index_t index, priority_t priority) {
+			void insert(index_t index, priority_t priority) {
 				if (size_ == heap.size() - 1) {
 					throw std::runtime_error("Max heap");
 				}
@@ -320,62 +329,30 @@ namespace screeps {
 			typedef uint8_t room_index_t;
 
 		private:
-			struct state_t {
-				std::vector<room_info_t> room_table;
-				std::vector<room_index_t> reverse_room_table;
-				std::set<map_position_t> blocked_rooms;
-				std::vector<pos_index_t> parents;
-				open_closed_t open_closed;
-				heap_t<pos_index_t, cost_t>heap;
-				std::vector<goal_t> goals;
-				cost_t plain_cost;
-				cost_t swamp_cost;
-				double heuristic_weight;
-				uint8_t max_rooms;
-				bool flee;
-				v8::Local<v8::Value>* room_data_handles;
-				v8::Local<v8::Function>* room_callback;
+			static constexpr size_t map_position_size = 1 << sizeof(map_position_t) * 8;
+			std::array<room_info_t, k_max_rooms> room_table;
+			size_t room_table_size = 0;
+			std::array<room_index_t, map_position_size> reverse_room_table;
+			std::unordered_set<map_position_t, map_position_t::hash_t> blocked_rooms;
+			std::array<pos_index_t, 2500 * k_max_rooms> parents;
+			open_closed_t<2500 * k_max_rooms> open_closed;
+			heap_t<pos_index_t, cost_t, 2500 * k_max_rooms> heap;
+			std::vector<goal_t> goals;
+			cost_t plain_cost;
+			cost_t swamp_cost;
+			double heuristic_weight;
+			uint8_t max_rooms;
+			bool flee;
+			v8::Local<v8::Value>* room_data_handles;
+			v8::Local<v8::Function>* room_callback;
+			bool _is_in_use = false;
 
-				state_t(size_t size) :
-					reverse_room_table(1 << sizeof(map_position_t) * 8),
-					parents(size),
-					open_closed(size),
-					heap(2500, size) {
-				}
-			};
-
-			class state_manager_t {
-				private:
-					path_finder_t& pf;
-					std::auto_ptr<state_t> state;
-
-				public:
-					state_manager_t(path_finder_t& that) : pf(that) {
-						if (++pf.depth > 1) {
-							state = std::auto_ptr<state_t>(new state_t(that.state));
-						}
-					}
-
-					~state_manager_t() {
-						if (--pf.depth >= 1) {
-							pf.state = *state;
-						}
-					}
-			};
-
-			uint16_t depth;
-			state_t state;
-
-			static std::map<map_position_t, uint8_t*> terrain;
+			static std::array<uint8_t*, map_position_size> terrain;
 
 			class js_error: public std::runtime_error {
 				public: js_error() : std::runtime_error("js error") {}
 			};
 
-		public:
-			path_finder_t();
-
-		private:
 			room_index_t room_index_from_pos(const map_position_t map_pos);
 			pos_index_t index_from_pos(const world_position_t pos);
 			world_position_t pos_from_index(pos_index_t index) const;
@@ -403,6 +380,11 @@ namespace screeps {
 				bool flee,
 				double heuristic_weight
 			);
-			void load_terrain(v8::Local<v8::Array> terrain);
+
+			bool is_in_use() const {
+				return _is_in_use;
+			}
+
+			static void load_terrain(v8::Local<v8::Array> terrain);
 	};
 };
