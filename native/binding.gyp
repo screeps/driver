@@ -50,6 +50,10 @@
 			'cflags_cc!': [ '-fno-exceptions' ],
 			'conditions': [
 				[ 'OS == "win"', { 'defines': ['NOMINMAX'] } ],
+				[ 'OS == "win"',
+                    { 'defines': [ 'IVM_DLLEXPORT=__declspec(dllexport)' ] },
+                    { 'defines': [ 'IVM_DLLEXPORT=' ] },
+                ],
 			],
 			'sources': [
 				'src/main.cc',

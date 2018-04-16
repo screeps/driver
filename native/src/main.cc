@@ -50,7 +50,7 @@ namespace screeps {
 	}
 };
 
-extern "C" void InitForContext(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> target) {
+extern "C" IVM_DLLEXPORT void InitForContext(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> target) {
 	Nan::Set(target, Nan::New("search").ToLocalChecked(), Nan::GetFunction(Nan::New<v8::FunctionTemplate>(screeps::search)).ToLocalChecked());
 	Nan::Set(target, Nan::New("loadTerrain").ToLocalChecked(), Nan::GetFunction(Nan::New<v8::FunctionTemplate>(screeps::load_terrain)).ToLocalChecked());
 }

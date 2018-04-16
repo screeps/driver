@@ -6,4 +6,4 @@ let snapshot = ivm.Isolate.createSnapshot([ { code, filename: '<runtime>' } ]);
 let buffer = Buffer.from(snapshot.copy());
 fs.writeFileSync(path.resolve(__dirname, './build/runtime.snapshot.bin'), buffer);
 console.log(`Runtime snapshot created (${buffer.length} bytes)`);
-
+process.exit();
