@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const WebbackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
@@ -16,6 +17,7 @@ module.exports = {
         new WebbackShellPlugin({
             dev: false,
             onBuildEnd: ['node --nolazy make-runtime-snapshot']
-        })
+        }),
+        new webpack.IgnorePlugin(/\.\/core\/index/)
     ]
 };
