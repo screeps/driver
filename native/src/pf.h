@@ -241,8 +241,8 @@ namespace screeps {
 
 		private:
 			std::array<priority_t, capacity> priorities;
-			// This means there can only be 2500 pending nodes. It's not related to room size of 50 * 50.
-			std::array<index_t, 2500> heap;
+			// This means there can only be 5000 pending nodes. It's not related to room size of 50 * 50.
+			std::array<index_t, 5000> heap;
 			size_t size_;
 
 		public:
