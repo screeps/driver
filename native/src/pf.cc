@@ -6,18 +6,20 @@
 
 using namespace screeps;
 
-constexpr bool is_border_pos(uint16_t val) {
+template <typename T>
+constexpr bool is_border_pos(T val) {
 	return (val + 1) % 50 < 2;
 }
 
-constexpr bool is_near_border_pos(uint16_t val) {
+template <typename T>
+constexpr bool is_near_border_pos(T val) {
 	return (val + 2) % 50 < 4;
 }
 
 	decltype(path_finder_t::terrain) path_finder_t::terrain = {{ nullptr }};
 
 	// Return room index from a map position, allocates a new room index if needed and possible
-	path_finder_t::room_index_t path_finder_t::room_index_from_pos(const map_position_t map_pos) {
+	room_index_t path_finder_t::room_index_from_pos(const map_position_t map_pos) {
 		room_index_t room_index = reverse_room_table[map_pos.id];
 		if (room_index == 0) {
 			if (room_table_size >= max_rooms) {
@@ -62,7 +64,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 	}
 
 	// Conversions to/from index & world_position_t
-	path_finder_t::pos_index_t path_finder_t::index_from_pos(const world_position_t pos) {
+	pos_index_t path_finder_t::index_from_pos(const world_position_t pos) {
 		room_index_t room_index = room_index_from_pos(pos.map_position());
 		if (room_index == 0) {
 			throw std::runtime_error("Invalid invocation of index_from_pos");
@@ -70,15 +72,15 @@ constexpr bool is_near_border_pos(uint16_t val) {
 		return pos_index_t(room_index - 1) * 50 * 50 + pos.xx % 50 * 50 + pos.yy % 50;
 	}
 
-	world_position_t path_finder_t::pos_from_index(path_finder_t::pos_index_t index) const {
+	world_position_t path_finder_t::pos_from_index(pos_index_t index) const {
 		room_index_t room_index = index / (50 * 50);
 		const room_info_t& terrain = room_table[room_index];
-		uint16_t coord = index - room_index * 50 * 50;
+		unsigned int coord = index - room_index * 50 * 50;
 		return world_position_t(coord / 50 + terrain.pos.xx * 50, coord % 50 + terrain.pos.yy * 50);
 	}
 
 	// Push a new node to the heap, or update its cost if it already exists
-	void path_finder_t::push_node(path_finder_t::pos_index_t parent_index, world_position_t node, cost_t g_cost) {
+	void path_finder_t::push_node(pos_index_t parent_index, world_position_t node, cost_t g_cost) {
 		pos_index_t index = index_from_pos(node);
 		if (open_closed.is_closed(index)) {
 			return;
@@ -101,7 +103,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 	}
 
 	// Return cost of moving to a node
-	path_finder_t::cost_t path_finder_t::look(const world_position_t pos) {
+	cost_t path_finder_t::look(const world_position_t pos) {
 		room_index_t room_index = room_index_from_pos(pos.map_position());
 		if (room_index == 0) {
 			return obstacle;
@@ -131,7 +133,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 	}
 
 	// Returns the minimum Chebyshev distance to a goal
-	path_finder_t::cost_t path_finder_t::heuristic(const world_position_t pos) const {
+	cost_t path_finder_t::heuristic(const world_position_t pos) const {
 		if (flee) {
 			cost_t ret = 0;
 			for (size_t ii = 0; ii < goals.size(); ++ii) {
@@ -156,7 +158,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 	}
 
 	// Run an iteration of basic A*
-	void path_finder_t::astar(path_finder_t::pos_index_t index, world_position_t pos, path_finder_t::cost_t g_cost) {
+	void path_finder_t::astar(pos_index_t index, world_position_t pos, cost_t g_cost) {
 		for (int dir = world_position_t::TOP; dir <= world_position_t::TOP_LEFT; ++dir) {
 			world_position_t neighbor = pos.position_in_direction(static_cast<world_position_t::direction_t>(dir));
 
@@ -198,7 +200,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 	}
 
 	// JPS dragons
-	world_position_t path_finder_t::jump_x(path_finder_t::cost_t cost, world_position_t pos, int8_t dx) {
+	world_position_t path_finder_t::jump_x(cost_t cost, world_position_t pos, int8_t dx) {
 		cost_t prev_cost_u = look(world_position_t(pos.xx, pos.yy - 1));
 		cost_t prev_cost_d = look(world_position_t(pos.xx, pos.yy + 1));
 		while (true) {
@@ -229,7 +231,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 		return pos;
 	}
 
-	world_position_t path_finder_t::jump_y(path_finder_t::cost_t cost, world_position_t pos, int8_t dy) {
+	world_position_t path_finder_t::jump_y(cost_t cost, world_position_t pos, int8_t dy) {
 		cost_t prev_cost_l = look(world_position_t(pos.xx - 1, pos.yy));
 		cost_t prev_cost_r = look(world_position_t(pos.xx + 1, pos.yy));
 		while (true) {
@@ -260,7 +262,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 		return pos;
 	}
 
-	world_position_t path_finder_t::jump_xy(path_finder_t::cost_t cost, world_position_t pos, int8_t dx, int8_t dy) {
+	world_position_t path_finder_t::jump_xy(cost_t cost, world_position_t pos, int8_t dx, int8_t dy) {
 		cost_t prev_cost_x = look(world_position_t(pos.xx - dx, pos.yy));
 		cost_t prev_cost_y = look(world_position_t(pos.xx, pos.yy - dy));
 		while (true) {
@@ -297,7 +299,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 		return pos;
 	}
 
-	world_position_t path_finder_t::jump(path_finder_t::cost_t cost, world_position_t pos, int8_t dx, int8_t dy) {
+	world_position_t path_finder_t::jump(cost_t cost, world_position_t pos, int8_t dx, int8_t dy) {
 		if (dx != 0) {
 			if (dy != 0) {
 				return jump_xy(cost, pos, dx, dy);
@@ -309,14 +311,14 @@ constexpr bool is_near_border_pos(uint16_t val) {
 		}
 	}
 
-	void path_finder_t::jps(pos_index_t index, world_position_t pos, path_finder_t::cost_t g_cost) {
+	void path_finder_t::jps(pos_index_t index, world_position_t pos, cost_t g_cost) {
 		world_position_t parent = pos_from_index(parents[index]);
 		int8_t dx = pos.xx > parent.xx ? 1 : (pos.xx < parent.xx ? -1 : 0);
 		int8_t dy = pos.yy > parent.yy ? 1 : (pos.yy < parent.yy ? -1 : 0);
 
 		// First check to see if we're jumping to/from a border, options are limited in this case
 		world_position_t neighbors[3];
-		uint8_t neighbor_count = 0;
+		int neighbor_count = 0;
 		if (pos.xx % 50 == 0) {
 			if (dx == -1) {
 				neighbors[0] = world_position_t(pos.xx - 1, pos.yy);
@@ -361,7 +363,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 
 		// Add special nodes from the above blocks to the heap
 		if (neighbor_count != 0) {
-			for (uint8_t ii = 0; ii < neighbor_count; ++ii) {
+			for (int ii = 0; ii < neighbor_count; ++ii) {
 				cost_t n_cost = look(neighbors[ii]);
 				if (n_cost == obstacle) {
 					continue;
@@ -444,7 +446,7 @@ constexpr bool is_near_border_pos(uint16_t val) {
 		}
 	}
 
-	void path_finder_t::jump_neighbor(world_position_t pos, path_finder_t::pos_index_t index, world_position_t neighbor, path_finder_t::cost_t g_cost, path_finder_t::cost_t cost, path_finder_t::cost_t n_cost) {
+	void path_finder_t::jump_neighbor(world_position_t pos, pos_index_t index, world_position_t neighbor, cost_t g_cost, cost_t cost, cost_t n_cost) {
 		if (n_cost != cost || is_border_pos(neighbor.xx) || is_border_pos(neighbor.yy)) {
 			if (n_cost == obstacle) {
 				return;
@@ -465,8 +467,8 @@ constexpr bool is_near_border_pos(uint16_t val) {
 		v8::Local<v8::Value> origin_js,
 		v8::Local<v8::Array> goals_js,
 		v8::Local<v8::Function> room_callback,
-		path_finder_t::cost_t plain_cost,
-		path_finder_t::cost_t swamp_cost,
+		cost_t plain_cost,
+		cost_t swamp_cost,
 		uint8_t max_rooms,
 		uint32_t max_ops,
 		uint32_t max_cost,
