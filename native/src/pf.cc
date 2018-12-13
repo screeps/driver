@@ -110,7 +110,7 @@ constexpr bool is_near_border_pos(T val) {
 		}
 		const room_info_t& terrain = room_table[room_index - 1];
 		if (terrain.cost_matrix != nullptr) {
-			uint8_t tmp = terrain.cost_matrix[pos.xx % 50][pos.yy % 50];
+			int tmp = terrain.cost_matrix[pos.xx % 50][pos.yy % 50];
 			if (tmp != 0) {
 				if (tmp == 0xff) {
 					return obstacle;
@@ -119,17 +119,7 @@ constexpr bool is_near_border_pos(T val) {
 				}
 			}
 		}
-		uint8_t tile = terrain.look(pos.xx % 50, pos.yy % 50);
-		switch (tile) {
-			case 0: // PLAIN
-				return plain_cost;
-			case 1: // WALL
-			case 3: // WALL + SWAMP (lol)
-				return obstacle;
-			case 2: // SWAMP
-				return swamp_cost;
-		}
-		return 1;
+		return look_table[terrain.look(pos.xx % 50, pos.yy % 50)];
 	}
 
 	// Returns the minimum Chebyshev distance to a goal
@@ -200,7 +190,7 @@ constexpr bool is_near_border_pos(T val) {
 	}
 
 	// JPS dragons
-	world_position_t path_finder_t::jump_x(cost_t cost, world_position_t pos, int8_t dx) {
+	world_position_t path_finder_t::jump_x(cost_t cost, world_position_t pos, int dx) {
 		cost_t prev_cost_u = look(world_position_t(pos.xx, pos.yy - 1));
 		cost_t prev_cost_d = look(world_position_t(pos.xx, pos.yy + 1));
 		while (true) {
@@ -231,7 +221,7 @@ constexpr bool is_near_border_pos(T val) {
 		return pos;
 	}
 
-	world_position_t path_finder_t::jump_y(cost_t cost, world_position_t pos, int8_t dy) {
+	world_position_t path_finder_t::jump_y(cost_t cost, world_position_t pos, int dy) {
 		cost_t prev_cost_l = look(world_position_t(pos.xx - 1, pos.yy));
 		cost_t prev_cost_r = look(world_position_t(pos.xx + 1, pos.yy));
 		while (true) {
@@ -262,7 +252,7 @@ constexpr bool is_near_border_pos(T val) {
 		return pos;
 	}
 
-	world_position_t path_finder_t::jump_xy(cost_t cost, world_position_t pos, int8_t dx, int8_t dy) {
+	world_position_t path_finder_t::jump_xy(cost_t cost, world_position_t pos, int dx, int dy) {
 		cost_t prev_cost_x = look(world_position_t(pos.xx - dx, pos.yy));
 		cost_t prev_cost_y = look(world_position_t(pos.xx, pos.yy - dy));
 		while (true) {
@@ -299,7 +289,7 @@ constexpr bool is_near_border_pos(T val) {
 		return pos;
 	}
 
-	world_position_t path_finder_t::jump(cost_t cost, world_position_t pos, int8_t dx, int8_t dy) {
+	world_position_t path_finder_t::jump(cost_t cost, world_position_t pos, int dx, int dy) {
 		if (dx != 0) {
 			if (dy != 0) {
 				return jump_xy(cost, pos, dx, dy);
@@ -313,8 +303,8 @@ constexpr bool is_near_border_pos(T val) {
 
 	void path_finder_t::jps(pos_index_t index, world_position_t pos, cost_t g_cost) {
 		world_position_t parent = pos_from_index(parents[index]);
-		int8_t dx = pos.xx > parent.xx ? 1 : (pos.xx < parent.xx ? -1 : 0);
-		int8_t dy = pos.yy > parent.yy ? 1 : (pos.yy < parent.yy ? -1 : 0);
+		int dx = pos.xx > parent.xx ? 1 : (pos.xx < parent.xx ? -1 : 0);
+		int dy = pos.yy > parent.yy ? 1 : (pos.yy < parent.yy ? -1 : 0);
 
 		// First check to see if we're jumping to/from a border, options are limited in this case
 		world_position_t neighbors[3];
@@ -376,13 +366,13 @@ constexpr bool is_near_border_pos(T val) {
 		// Regular JPS iteration follows
 
 		// First check to see if we're close to borders
-		int8_t border_dx = 0;
+		int border_dx = 0;
 		if (pos.xx % 50 == 1) {
 			border_dx = -1;
 		} else if (pos.xx % 50 == 48) {
 			border_dx = 1;
 		}
-		int8_t border_dy = 0;
+		int border_dy = 0;
 		if (pos.yy % 50 == 1) {
 			border_dy = -1;
 		} else if (pos.yy % 50 == 48) {
@@ -502,8 +492,8 @@ constexpr bool is_near_border_pos(T val) {
 		}
 
 		// Other initialization
-		this->plain_cost = plain_cost;
-		this->swamp_cost = swamp_cost;
+		look_table[0] = plain_cost;
+		look_table[2] = swamp_cost;
 		this->max_rooms = max_rooms;
 		this->heuristic_weight = heuristic_weight;
 		uint32_t ops_remaining = max_ops;

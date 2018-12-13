@@ -339,6 +339,7 @@ namespace screeps {
 	class path_finder_t {
 		private:
 			static constexpr size_t map_position_size = 1 << sizeof(map_position_t) * 8;
+			static constexpr cost_t obstacle = std::numeric_limits<cost_t>::max();
 			std::array<room_info_t, k_max_rooms> room_table;
 			size_t room_table_size = 0;
 			std::array<room_index_t, map_position_size> reverse_room_table;
@@ -347,8 +348,7 @@ namespace screeps {
 			open_closed_t<2500 * k_max_rooms> open_closed;
 			heap_t<pos_index_t, cost_t, 2500 * k_max_rooms> heap;
 			std::vector<goal_t> goals;
-			cost_t plain_cost;
-			cost_t swamp_cost;
+			cost_t look_table[4] = {obstacle, obstacle, obstacle, obstacle};
 			double heuristic_weight;
 			room_index_t max_rooms;
 			bool flee;
@@ -367,16 +367,15 @@ namespace screeps {
 			world_position_t pos_from_index(pos_index_t index) const;
 			void push_node(pos_index_t parent_index, world_position_t node, cost_t g_cost);
 
-			const cost_t obstacle = std::numeric_limits<cost_t>::max();
 			cost_t look(const world_position_t pos);
 			cost_t heuristic(const world_position_t pos) const;
 
 			void astar(pos_index_t index, world_position_t pos, cost_t g_cost);
 
-			world_position_t jump_x(cost_t cost, world_position_t pos, int8_t dx);
-			world_position_t jump_y(cost_t cost, world_position_t pos, int8_t dx);
-			world_position_t jump_xy(cost_t cost, world_position_t pos, int8_t dx, int8_t dy);
-			world_position_t jump(cost_t cost, world_position_t pos, int8_t dx, int8_t dy);
+			world_position_t jump_x(cost_t cost, world_position_t pos, int dx);
+			world_position_t jump_y(cost_t cost, world_position_t pos, int dx);
+			world_position_t jump_xy(cost_t cost, world_position_t pos, int dx, int dy);
+			world_position_t jump(cost_t cost, world_position_t pos, int dx, int dy);
 			void jps(pos_index_t index, world_position_t pos, cost_t g_cost);
 			void jump_neighbor(world_position_t pos, pos_index_t index, world_position_t neighbor, cost_t g_cost, cost_t cost, cost_t n_cost);
 
