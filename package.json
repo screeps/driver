@@ -10,7 +10,7 @@
     "isolated-vm": "^2.0.1",
     "lodash": "^3.10.1",
     "nan": "^2.14.0",
-    "node-gyp": "^3.6.2",
+    "node-gyp": "^3.8.0",
     "q": "^1.4.1",
     "webpack": "^3.11.0",
     "webpack-shell-plugin": "^0.5.0"
