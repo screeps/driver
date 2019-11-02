@@ -8,7 +8,7 @@
   "dependencies": {
     "generic-pool": "^3.4.1",
     "isolated-vm": "^2.0.1",
-    "lodash": "^3.10.1",
+    "lodash": "^4.17.13",
     "nan": "^2.14.0",
     "node-gyp": "^3.8.0",
     "q": "^1.4.1",
