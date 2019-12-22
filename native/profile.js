@@ -103,4 +103,4 @@ if (checksum !== 11843305) {
 	console.error('Incorrect results!');
 	process.exit(1);
 }
-console.log('Completed in: '+ (time[0] + time[1] / 1e9));
+console.log(time[0] + time[1] / 1e9);

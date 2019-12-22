@@ -7,9 +7,9 @@
 namespace screeps {
 
 	// Init 2 Pathfinders per thread. We do 2 here because sometimes recursive calls to the path
-    // finder are useful. Any more than 2 deep recursion will have to allocate a new path finder at a
-    // cost of 471kb(!)
-    thread_local std::array<path_finder_t, 2> path_finders;
+	// finder are useful. Any more than 2 deep recursion will have to allocate a new path finder at a
+	// cost of 2.16mb(!)
+	thread_local std::array<path_finder_t, 2> path_finders;
 	uint8_t room_info_t::cost_matrix0[2500] = { 0 };
 
 	NAN_METHOD(search) {
@@ -28,8 +28,8 @@ namespace screeps {
 		}
 
 		// Get the values from v8 and run the search
-		path_finder_t::cost_t plain_cost = Nan::To<uint32_t>(info[3]).FromJust();
-		path_finder_t::cost_t swamp_cost = Nan::To<uint32_t>(info[4]).FromJust();
+		cost_t plain_cost = Nan::To<uint32_t>(info[3]).FromJust();
+		cost_t swamp_cost = Nan::To<uint32_t>(info[4]).FromJust();
 		uint8_t max_rooms = Nan::To<uint32_t>(info[5]).FromJust();
 		uint32_t max_ops = Nan::To<uint32_t>(info[6]).FromJust();
 		uint32_t max_cost = Nan::To<uint32_t>(info[7]).FromJust();
@@ -53,6 +53,7 @@ namespace screeps {
 extern "C" IVM_DLLEXPORT void InitForContext(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> target) {
 	Nan::Set(target, Nan::New("search").ToLocalChecked(), Nan::GetFunction(Nan::New<v8::FunctionTemplate>(screeps::search)).ToLocalChecked());
 	Nan::Set(target, Nan::New("loadTerrain").ToLocalChecked(), Nan::GetFunction(Nan::New<v8::FunctionTemplate>(screeps::load_terrain)).ToLocalChecked());
+	Nan::Set(target, Nan::New("version").ToLocalChecked(), Nan::New<v8::Number>(11));
 }
 
 NAN_MODULE_INIT(init) {

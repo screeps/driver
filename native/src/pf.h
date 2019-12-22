@@ -8,8 +8,12 @@
 #include <vector>
 
 namespace screeps {
+	typedef uint32_t cost_t; // maximum: longest chebyshev distance of whole map
+	typedef uint32_t pos_index_t; // maximum: k_max_rooms * 2500
+	typedef uint32_t room_index_t; // maximum: k_max_rooms (32 bits tested faster than uint8_t)
+	constexpr size_t k_max_rooms = 64;
 
-	constexpr size_t k_max_rooms = 16;
+	static_assert(std::numeric_limits<pos_index_t>::max() > 2500 * k_max_rooms, "pos_index_t is too small");
 
 	//
 	// Stores coordinates of a room on the global world map.
@@ -19,7 +23,7 @@ namespace screeps {
 		union {
 			uint16_t id;
 			struct {
-				uint8_t xx, yy;
+				uint8_t xx, yy; // maximum: world_size
 			};
 		};
 
@@ -55,13 +59,20 @@ namespace screeps {
 	class world_position_t {
 
 		public:
-			uint16_t xx, yy;
+			union {
+				uint64_t id;
+				struct {
+					uint32_t xx, yy; // maximum: world_size[255] * 50 (32 bits tested faster than uint16_t)
+				};
+			};
 
 			enum direction_t { TOP, TOP_RIGHT, RIGHT, BOTTOM_RIGHT, BOTTOM, BOTTOM_LEFT, LEFT, TOP_LEFT };
 
 			world_position_t() {}
 
-			world_position_t(uint16_t xx, uint16_t yy) : xx(xx), yy(yy) {}
+			world_position_t(uint32_t xx, uint32_t yy) : xx(xx), yy(yy) {}
+
+			explicit world_position_t(uint64_t id) : id(id) {}
 
 			world_position_t(v8::Local<v8::Value> pos) {
 				v8::Local<v8::Object> obj = Nan::To<v8::Object>(pos).ToLocalChecked();
@@ -70,7 +81,7 @@ namespace screeps {
 			}
 
 			static world_position_t null() {
-				return world_position_t(0, 0);
+				return world_position_t(0);
 			}
 
 			friend std::ostream& operator<< (std::ostream& os, const world_position_t& that) {
@@ -88,11 +99,11 @@ namespace screeps {
 			}
 
 			bool operator!= (world_position_t right) const {
-				return this->xx != right.xx || this->yy != right.yy;
+				return id != right.id;
 			}
 
 			bool is_null() const {
-				return xx == 0 && yy == 0;
+				return id == 0;
 			}
 
 			world_position_t position_in_direction(direction_t dir) const {
@@ -118,8 +129,8 @@ namespace screeps {
 
 			// Gets the linear direction to a tile
 			direction_t direction_to(world_position_t pos) const {
-				int8_t dx = pos.xx - this->xx;
-				int8_t dy = pos.yy - this->yy;
+				int dx = pos.xx - this->xx;
+				int dy = pos.yy - this->yy;
 				if (dx > 0) {
 					if (dy > 0) {
 						return BOTTOM_RIGHT;
@@ -146,7 +157,7 @@ namespace screeps {
 				return (direction_t)-1;
 			}
 
-			uint16_t range_to(const world_position_t pos) const {
+			cost_t range_to(const world_position_t pos) const {
 				return std::max(
 					pos.xx > this->xx ? pos.xx - this->xx : this->xx - pos.xx,
 					pos.yy > this->yy ? pos.yy - this->yy : this->yy - pos.yy
@@ -164,14 +175,15 @@ namespace screeps {
 	class open_closed_t {
 
 		private:
-			std::array<unsigned int, capacity> list;
-			unsigned int marker;
+			using marker_t = uint32_t;
+			std::array<marker_t, capacity> list;
+			marker_t marker;
 
 		public:
 			open_closed_t() : list{}, marker(1) {}
 
 			void clear() {
-				if (std::numeric_limits<unsigned int>::max() - 2 <= marker) {
+				if (std::numeric_limits<marker_t>::max() - 2 <= marker) {
 					std::fill(list.begin(), list.end(), 0);
 					marker = 1;
 				} else {
@@ -179,19 +191,19 @@ namespace screeps {
 				}
 			}
 
-			bool is_open(unsigned int index) const {
+			bool is_open(size_t index) const {
 				return list[index] == marker;
 			}
 
-			bool is_closed(unsigned int index) const {
+			bool is_closed(size_t index) const {
 				return list[index] == marker + 1;
 			}
 
-			void open(unsigned int index) {
+			void open(size_t index) {
 				list[index] = marker;
 			}
 
-			void close(unsigned int index) {
+			void close(size_t index) {
 				list[index] = marker + 1;
 			}
 	};
@@ -217,7 +229,7 @@ namespace screeps {
 			if (cost_matrix[xx][yy]) {
 				return cost_matrix[xx][yy];
 			}
-			uint16_t index = xx * 50 + yy;
+			unsigned int index = xx * 50 + yy;
 			return 0x03 & terrain[index / 4] >> (index % 4 * 2);
 		}
 	};
@@ -225,7 +237,7 @@ namespace screeps {
 	//
 	// Stores information about a pathfinding goal, just a position + range
 	struct goal_t {
-		uint8_t range;
+		cost_t range;
 		world_position_t pos;
 		goal_t(v8::Local<v8::Value> goal) {
 			v8::Local<v8::Object> obj = Nan::To<v8::Object>(goal).ToLocalChecked();
@@ -241,8 +253,10 @@ namespace screeps {
 
 		private:
 			std::array<priority_t, capacity> priorities;
-			// This means there can only be 2500 pending nodes. It's not related to room size of 50 * 50.
-			std::array<index_t, 2500> heap;
+			// Theoretical max number of open nodes is total node divided by 8. 1 node opens all its
+			// neighbors repeated perfectly over the whole graph. It's impossible to actually hit this
+			// limit with a regular pathfinder operation
+			std::array<index_t, 2500 * k_max_rooms / 8> heap;
 			size_t size_;
 
 		public:
@@ -323,13 +337,9 @@ namespace screeps {
 	//
 	// Path finder encapsulation. Multiple instances are thread-safe
 	class path_finder_t {
-		public:
-			typedef uint32_t cost_t;
-			typedef uint16_t pos_index_t;
-			typedef uint8_t room_index_t;
-
 		private:
 			static constexpr size_t map_position_size = 1 << sizeof(map_position_t) * 8;
+			static constexpr cost_t obstacle = std::numeric_limits<cost_t>::max();
 			std::array<room_info_t, k_max_rooms> room_table;
 			size_t room_table_size = 0;
 			std::array<room_index_t, map_position_size> reverse_room_table;
@@ -338,10 +348,9 @@ namespace screeps {
 			open_closed_t<2500 * k_max_rooms> open_closed;
 			heap_t<pos_index_t, cost_t, 2500 * k_max_rooms> heap;
 			std::vector<goal_t> goals;
-			cost_t plain_cost;
-			cost_t swamp_cost;
+			cost_t look_table[4] = {obstacle, obstacle, obstacle, obstacle};
 			double heuristic_weight;
-			uint8_t max_rooms;
+			room_index_t max_rooms;
 			bool flee;
 			v8::Local<v8::Value>* room_data_handles;
 			v8::Local<v8::Function>* room_callback;
@@ -358,16 +367,15 @@ namespace screeps {
 			world_position_t pos_from_index(pos_index_t index) const;
 			void push_node(pos_index_t parent_index, world_position_t node, cost_t g_cost);
 
-			const cost_t obstacle = std::numeric_limits<cost_t>::max();
 			cost_t look(const world_position_t pos);
 			cost_t heuristic(const world_position_t pos) const;
 
 			void astar(pos_index_t index, world_position_t pos, cost_t g_cost);
 
-			world_position_t jump_x(cost_t cost, world_position_t pos, int8_t dx);
-			world_position_t jump_y(cost_t cost, world_position_t pos, int8_t dx);
-			world_position_t jump_xy(cost_t cost, world_position_t pos, int8_t dx, int8_t dy);
-			world_position_t jump(cost_t cost, world_position_t pos, int8_t dx, int8_t dy);
+			world_position_t jump_x(cost_t cost, world_position_t pos, int dx);
+			world_position_t jump_y(cost_t cost, world_position_t pos, int dx);
+			world_position_t jump_xy(cost_t cost, world_position_t pos, int dx, int dy);
+			world_position_t jump(cost_t cost, world_position_t pos, int dx, int dy);
 			void jps(pos_index_t index, world_position_t pos, cost_t g_cost);
 			void jump_neighbor(world_position_t pos, pos_index_t index, world_position_t neighbor, cost_t g_cost, cost_t cost, cost_t n_cost);
 

@@ -1,16 +1,16 @@
 {
   "name": "@screeps/driver",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "description": "",
   "main": "lib/index.js",
   "author": "Artem Chivchalov <contact@screeps.com>",
   "license": "ISC",
   "dependencies": {
     "generic-pool": "^3.4.1",
-    "isolated-vm": "^1.5.2",
+    "isolated-vm": "^2.0.1",
     "lodash": "^3.10.1",
-    "nan": "^2.4.0",
-    "node-gyp": "^3.6.2",
+    "nan": "^2.14.0",
+    "node-gyp": "^3.8.0",
     "q": "^1.4.1",
     "webpack": "^3.11.0",
     "webpack-shell-plugin": "^0.5.0"
