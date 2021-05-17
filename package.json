@@ -1,13 +1,13 @@
 {
   "name": "@screeps/driver",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "description": "",
   "main": "lib/index.js",
   "author": "Artem Chivchalov <contact@screeps.com>",
   "license": "ISC",
   "dependencies": {
     "generic-pool": "^3.4.1",
-    "isolated-vm": "^2.0.1",
+    "isolated-vm": "^3.0.0",
     "lodash": "^3.10.1",
     "nan": "^2.14.0",
     "node-gyp": "^3.8.0",
