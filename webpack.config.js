@@ -18,6 +18,6 @@ module.exports = {
             dev: false,
             onBuildEnd: ['node --nolazy make-runtime-snapshot']
         }),
-        new webpack.IgnorePlugin(/\.\/core\/index/)
+        new webpack.IgnorePlugin(/\@screeps\/core/)
     ]
 };
