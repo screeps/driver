@@ -18,6 +18,6 @@
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch",
-    "install": "node-gyp rebuild -C native && webpack"
+    "install": "node-gyp rebuild -C native"
   }
 }
