@@ -1,6 +1,6 @@
 {
   "name": "@screeps/driver",
-  "version": "5.2.1",
+  "version": "5.2.2-rc1",
   "description": "",
   "main": "lib/index.js",
   "author": "Artem Chivchalov <contact@screeps.com>",
