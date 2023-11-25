@@ -1,21 +1,41 @@
 name: Build npm package
-on: push
+on:
+  push:
+    branches:
+      - '**'
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    if: contains(github.event.head_commit.message, '🔖')
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v3
+      - name: ⤵️ Checkout
+        uses: actions/checkout@v3
       # Setup .npmrc file to publish to GitHub Packages
-      - uses: actions/setup-node@v3
+      - name: 🔨 Setup node (github registry)
+        uses: actions/setup-node@v3
         with:
           node-version: '10.x'
           registry-url: 'https://npm.pkg.github.com'
           # Defaults to the user or organization that owns the workflow file
           scope: '@screeps'
-      - run: npm ci
-      - run: npm publish
+      - name: 👷 Install
+        run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 📦️ Publish package (github registry)
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🔨 Setup node (npmjs)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '10.x'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@screeps'
+      - name: 📦️ Publish package (npmjs)
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
