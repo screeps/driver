@@ -32,7 +32,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 📦️ Publish tagged package (github registry)
         if: github.ref_name != 'master'
-        run: npm publish
+        run: npm publish --tag ${{ github.ref_name }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 🔨 Setup node (npmjs)
