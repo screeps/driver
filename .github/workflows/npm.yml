@@ -26,6 +26,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 📦️ Publish package (github registry)
+        if: github.ref_name == 'master'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 📦️ Publish tagged package (github registry)
+        if: github.ref_name != 'master'
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,9 +46,9 @@ jobs:
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
-      - name: 📦️ Publish package (npmjs)
+      - name: 📦️ Publish tagged package (npmjs)
         if: github.ref_name != 'master'
-        run: npm publish --tag github.ref_name
+        run: npm publish --tag ${{ github.ref_name }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
   
