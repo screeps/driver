@@ -7,6 +7,7 @@
   "license": "ISC",
   "dependencies": {
     "generic-pool": "^3.4.1",
+    "he": "1.2.0",
     "isolated-vm": "^2.0.1",
     "lodash": "^3.10.1",
     "nan": "^2.14.0",
