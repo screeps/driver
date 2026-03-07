@@ -8,10 +8,10 @@
   "dependencies": {
     "generic-pool": "^3.4.1",
     "he": "1.2.0",
-    "isolated-vm": "^2.0.1",
+    "isolated-vm": "6.0.2",
     "lodash": "^3.10.1",
-    "nan": "^2.14.0",
-    "node-gyp": "^3.8.0",
+    "nan": "2.25.0",
+    "node-gyp": "12.2.0",
     "q": "^1.4.1",
     "webpack": "^3.11.0",
     "webpack-shell-plugin": "^0.5.0"

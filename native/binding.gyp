@@ -31,16 +31,17 @@
 	'targets': [
 		{
 			'target_name': 'native',
-			'cflags_cc': [ '-std=c++14', '-g' ],
+			'cflags_cc': [ '-std=c++20', '-g' ],
 			'cflags_cc!': [ '-fno-exceptions' ],
 			'xcode_settings': {
 				'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
 				'GCC_GENERATE_DEBUGGING_SYMBOLS': 'YES',
-				'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
+				'CLANG_CXX_LANGUAGE_STANDARD': 'c++20',
 			},
 			'msvs_settings': {
 				'VCCLCompilerTool': {
 					'ExceptionHandling': '1',
+					'AdditionalOptions': [ '/std:c++20' ],
 				},
 			},
 			'include_dirs': [
