@@ -16,7 +16,7 @@ module.exports = {
     plugins: [
         new WebbackShellPlugin({
             dev: false,
-            onBuildEnd: ['node --nolazy make-runtime-snapshot']
+            onBuildEnd: ['node --no-node-snapshot make-runtime-snapshot']
         }),
         new webpack.IgnorePlugin(/\@screeps\/core/)
     ]
