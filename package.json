@@ -8,7 +8,7 @@
   "dependencies": {
     "generic-pool": "^3.4.1",
     "he": "1.2.0",
-    "isolated-vm": "6.0.2",
+    "isolated-vm": "github:laverdet/isolated-vm#cb93efcc1881c826ee98ad34e66955c08713acb2",
     "lodash": "^3.10.1",
     "nan": "2.25.0",
     "node-gyp": "12.2.0",
