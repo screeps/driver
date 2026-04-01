@@ -1,4 +1,5 @@
 .idea
+.github
 build
 native/build
 node_modules
