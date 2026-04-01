@@ -20,8 +20,5 @@
     "build": "webpack",
     "watch": "webpack --watch",
     "install": "node-gyp rebuild -C native"
-  },
-  "publishConfig": {
-    "tag": "beta"
   }
 }
